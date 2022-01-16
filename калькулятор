@@ -1,0 +1,127 @@
+fun main() {
+var postfixList = inf2post("22 - 2 * (2 + 2 + 2) / (2 + 2)")
+calcPost(postfixList)
+
+println()
+
+postfixList = inf2post("13 + 5 * (2^3 + 1)")
+calcPost(postfixList)
+
+println()
+
+postfixList = inf2post("4^3 - 8^2 + 9^(2 + 1) - sin(2^2*2)")
+calcPost(postfixList)
+
+println()
+
+postfixList = inf2post("12 - 2 * sin(5/3)^4.1")
+calcPost(postfixList)
+}
+
+
+fun parseExpression(expression: String): List<String> {
+val pattern = "-?\\d+(\\.\\d)?|\\(|\\)|\\+|-|\\*|/|\\^|(sin)".toRegex()
+
+return pattern.findAll(expression).map { it.value }.toList()
+}
+
+
+fun inf2post(input: String): List<String> {
+println("Entered infix expression: $input")
+val infixExpression = parseExpression(input)
+
+val priority = mapOf("+" to 1, "-" to 1, "*" to 2, "/" to 2, "^" to 3, "sin" to 3)
+val postfixExpression = mutableListOf<String>()
+val stack = mutableListOf<String>()
+
+for (s in infixExpression) {
+val numeric = s.matches("-?\\d+(\\.\\d+)?".toRegex())
+
+if (numeric) postfixExpression.add(s)
+else {
+when (s) {
+"(" -> {
+stack.add(s)
+}
+
+")" -> {
+while (stack.last() != "(")
+postfixExpression.add(stack.removeLast())
+stack.removeLast()
+}
+
+else -> {
+while ((stack.isNotEmpty()) &&
+(stack.last() != "(") &&
+(priority.getValue(s) <= priority.getValue(stack.last())))
+postfixExpression.add(stack.removeLast())
+stack.add(s)
+}
+}
+}
+}
+
+while (stack.isNotEmpty()) {
+postfixExpression.add(stack.removeLast())
+}
+
+print("Result postfix expression: ")
+println(postfixExpression.joinToString(" "))
+
+return postfixExpression.toList()
+}
+
+
+fun calcPost(list: List<String>): Float {
+val stack = mutableListOf<Float>()
+var result: Float
+var buffer: Float
+
+for (s in list) {
+when(s) {
+"+" -> {
+result = stack.removeLast()
+result += stack.removeLast()
+stack.add(result)
+}
+
+"-" -> {
+buffer = stack.removeLast()
+result = stack.removeLast() - buffer
+stack.add(result)
+}
+
+"*" -> {
+result = stack.removeLast()
+result *= stack.removeLast()
+stack.add(result)
+}
+
+"/" -> {
+buffer = stack.removeLast()
+result = stack.removeLast() / buffer
+stack.add(result)
+}
+
+"^" -> {
+buffer = stack.removeLast()
+result = stack.removeLast().pow(buffer)
+stack.add(result)
+}
+
+"sin" -> {
+result = sin(stack.removeLast())
+stack.add(result)
+}
+
+else -> {
+stack.add(s.toFloat())
+}
+}
+}
+
+print("Final calculation result: ")
+println(stack[0])
+
+return stack[0]
+}
